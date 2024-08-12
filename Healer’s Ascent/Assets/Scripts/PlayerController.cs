@@ -8,6 +8,13 @@ public class PlayerController : MonoBehaviour
 {
     const string IDLE = "Idle";
     const string WALK = "Walk";
+    const string CRAWL = "Prone Crawl";
+    const string PRONE_IDLE = "Prone Idle";
+    const string WALK_TO_PRONE = "Walk To Crouch";
+    const string PRONE_TO_WALK = "Prone To Crouch";
+
+    private bool isProne;
+    private bool isInTransition;
 
     CustomActions input;
 
@@ -19,6 +26,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] LayerMask clickableLayers;
 
     float lookRotationSpeed = 8f;
+
+    public bool IsProne { get => isProne; set => isProne = value; }
 
     void Awake()
     {
@@ -32,6 +41,7 @@ public class PlayerController : MonoBehaviour
     void AssignInputs()
     {
         input.Main.Move.performed += ctx => ClickToMove();
+        input.Main.Stealth.performed += ctx => StealthState();
     }
 
     void ClickToMove()
@@ -43,6 +53,19 @@ public class PlayerController : MonoBehaviour
             if (clickEffect != null)
             { Instantiate(clickEffect, hit.point + new Vector3(0, 0.1f, 0), clickEffect.transform.rotation); }
         }
+    }
+
+    void StealthState()
+    {
+        if (!isProne)
+        { isProne = true; isInTransition = true; animator.Play(WALK_TO_PRONE); }
+        else if (isProne)
+        { isProne = false; isInTransition = true; animator.Play(PRONE_TO_WALK); }
+    }
+
+    void TurnOffTransition()
+    {
+        isInTransition = false;
     }
 
     void OnEnable()
@@ -66,9 +89,18 @@ public class PlayerController : MonoBehaviour
 
     void SetAnimations()
     {
-        if (agent.velocity == Vector3.zero)
-        { animator.Play(IDLE); }
+        if (!isInTransition)
+        {
+            if (agent.velocity == Vector3.zero && !isProne)
+            { animator.Play(IDLE); }
+            else if (agent.velocity != Vector3.zero && !isProne)
+            { animator.Play(WALK); }
+            else if (agent.velocity == Vector3.zero && isProne)
+            { animator.Play(PRONE_IDLE); }
+            else if (agent.velocity != Vector3.zero && isProne)
+            { animator.Play(CRAWL); }
+        }
         else
-        { animator.Play(WALK); }
+        { Invoke("TurnOffTransition", 5); } // need to find a better fix
     }
 }
