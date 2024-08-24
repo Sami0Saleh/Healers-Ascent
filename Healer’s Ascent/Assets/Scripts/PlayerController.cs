@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.AI;
+using Unity.VisualScripting;
+using UnityEngine.PlayerLoop;
 
 public class PlayerController : MonoBehaviour
 {
@@ -18,6 +20,8 @@ public class PlayerController : MonoBehaviour
 
     CustomActions input;
 
+    [SerializeField] SliderController sliderController;
+
     [SerializeField]  NavMeshAgent agent;
     [SerializeField]  Animator animator;
 
@@ -25,24 +29,28 @@ public class PlayerController : MonoBehaviour
     [SerializeField] ParticleSystem clickEffect;
     [SerializeField] LayerMask clickableLayers;
 
-    [SerializeField] int maxHp = 10;
-    [SerializeField] int currentHp = 10;
+    [SerializeField] int maxHp = 1;
+    public int CurrentHp;
 
-    [SerializeField] Vector3 startPosition;
-    
+    [SerializeField] Transform startPosition;
+
+    [SerializeField] float baseSpeed = 1.5f;
+
     float lookRotationSpeed = 8f;
 
     public bool IsProne { get => isProne; set => isProne = value; }
 
+    public int Brave = 1;
     void Awake()
     {
-
-        currentHp = maxHp;
+        CurrentHp = maxHp;
 
         input = new CustomActions();
         AssignInputs();
+        UpdateSpeed();
     }
 
+    
     void AssignInputs()
     {
         input.Main.Move.performed += ctx => ClickToMove();
@@ -56,7 +64,11 @@ public class PlayerController : MonoBehaviour
         {
             agent.destination = hit.point;
             if (clickEffect != null)
-            { Instantiate(clickEffect, hit.point + new Vector3(0, 0.1f, 0), clickEffect.transform.rotation); }
+            {
+                ParticleSystem instantiatedEffect = Instantiate(clickEffect, hit.point + new Vector3(0, 0.1f, 0), clickEffect.transform.rotation);
+
+                Destroy(instantiatedEffect.gameObject, 0.5f);
+            }
         }
     }
 
@@ -83,6 +95,7 @@ public class PlayerController : MonoBehaviour
     {
         FaceTarget();
         SetAnimations();
+        
     }
 
     void FaceTarget()
@@ -112,17 +125,40 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage()
     {
-        currentHp -= 1;
+        CurrentHp -= 1;
 
-        if (currentHp <= 0)
+        if (CurrentHp <= 0)
         {
-            currentHp = 0;
+            CurrentHp = 0;
             ReSpawn();
         }
     }
 
     public void ReSpawn()
     {
-        transform.Translate(startPosition);
+        
+        StartCoroutine(ReSpawnAfterDeath());
+    }
+
+    IEnumerator ReSpawnAfterDeath()
+    {
+        yield return new WaitForSeconds(1f);
+
+        transform.position = startPosition.position;
+        agent.ResetPath();
+
+        Brave -= 1;
+        if (Brave < 1)
+        {
+            Brave = 1;
+        }
+        sliderController.UpdateValue(Brave);
+        CurrentHp = maxHp;
+        UpdateSpeed();
+    }
+
+    void UpdateSpeed()
+    {
+        agent.speed = baseSpeed + (Brave / 10f) * 0.2f;
     }
 }

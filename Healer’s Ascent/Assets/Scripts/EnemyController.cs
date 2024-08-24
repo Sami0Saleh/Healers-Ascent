@@ -5,7 +5,9 @@ public class EnemyController : MonoBehaviour
     [SerializeField] EnemyFOV enemyFOV;
     [SerializeField] Transform pointA; 
     [SerializeField] Transform pointB; 
-    [SerializeField] float speed = 2f; 
+    [SerializeField] float speed = 2f;
+    [SerializeField] private float shootCooldown = 2f; 
+    private float nextShootTime = 0f;
 
     private Vector3 targetPosition; 
 
@@ -32,10 +34,12 @@ public class EnemyController : MonoBehaviour
         }
     }
     
-    public void Shoot()
+    public void Shoot(PlayerController player)
     {
-         Debug.Log("Shooting");
-
-
+        if (Time.time >= nextShootTime)
+        {
+            player.TakeDamage();
+            nextShootTime = Time.time + shootCooldown;
+        }
     }
 }

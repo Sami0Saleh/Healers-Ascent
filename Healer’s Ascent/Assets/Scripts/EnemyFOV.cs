@@ -24,6 +24,8 @@ public class EnemyFOV : MonoBehaviour
 
     public MeshFilter viewMeshFilter;
     private Mesh _viewMesh;
+
+    private PlayerController _playerController;
     private void Start()
     {
         _viewMesh = new Mesh();
@@ -77,8 +79,13 @@ public class EnemyFOV : MonoBehaviour
         if (visibleTargets.Count > 0)
         {
             Transform target = visibleTargets[0];
-            enemytransform.LookAt(target);
-            enemyController.Shoot();
+            _playerController = target.GetComponent<PlayerController>();
+
+            if (_playerController.CurrentHp > 0)
+            {
+                enemytransform.LookAt(target);
+                enemyController.Shoot(_playerController);
+            }
         }
     }
     ViewCastInfo ViewCast(float globalAngle)
