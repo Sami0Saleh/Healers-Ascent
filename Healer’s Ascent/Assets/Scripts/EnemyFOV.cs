@@ -1,11 +1,16 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class EnemyFOV : MonoBehaviour
 {
+    [SerializeField] EnemyController enemyController;
+    [SerializeField] Transform enemytransform;
     public float viewRadius;
+
+    public bool PlayerDetected = false;
 
     [UnityEngine.Range(0,360)]
     public float viewAngle;
@@ -30,6 +35,7 @@ public class EnemyFOV : MonoBehaviour
     private void Update()
     {
         DrawFieldOfView();
+        UpdatePlayerDetection();
     }
 
     IEnumerator FindPlayerWithDelay(float delay)
@@ -42,6 +48,8 @@ public class EnemyFOV : MonoBehaviour
     }
     void FindPlayer()
     {
+        visibleTargets.Clear();
+
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, viewRadius, playerMask);
         for (int i = 0; i < targetsInViewRadius.Length; i++)
         {
@@ -50,15 +58,29 @@ public class EnemyFOV : MonoBehaviour
             if (Vector3.Angle(transform.forward, dirToTarget) < viewAngle / 2)
             {
                 float dstToTarget = Vector3.Distance(transform.position, target.position);
-                if (!Physics.Raycast(transform.position,dirToTarget,dstToTarget,obstaclesMask))
+                if (!Physics.Raycast(transform.position, dirToTarget, dstToTarget, obstaclesMask))
                 {
                     visibleTargets.Add(target);
-                    Debug.Log("Player Located");
+                    PlayerDetected = true;
+                    
                 }
             }
-        }    
-    }
+        }
 
+        if (visibleTargets.Count == 0)
+        {
+            PlayerDetected = false;
+        }
+    }
+    void UpdatePlayerDetection()
+    {
+        if (visibleTargets.Count > 0)
+        {
+            Transform target = visibleTargets[0];
+            enemytransform.LookAt(target);
+            enemyController.Shoot();
+        }
+    }
     ViewCastInfo ViewCast(float globalAngle)
     {
         Vector3 dir = DirFromAngle(globalAngle, true);

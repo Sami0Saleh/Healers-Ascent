@@ -18,21 +18,26 @@ public class PlayerController : MonoBehaviour
 
     CustomActions input;
 
-    NavMeshAgent agent;
-    Animator animator;
+    [SerializeField]  NavMeshAgent agent;
+    [SerializeField]  Animator animator;
 
     [Header("Movement")]
     [SerializeField] ParticleSystem clickEffect;
     [SerializeField] LayerMask clickableLayers;
 
+    [SerializeField] int maxHp = 10;
+    [SerializeField] int currentHp = 10;
+
+    [SerializeField] Vector3 startPosition;
+    
     float lookRotationSpeed = 8f;
 
     public bool IsProne { get => isProne; set => isProne = value; }
 
     void Awake()
     {
-        agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
+
+        currentHp = maxHp;
 
         input = new CustomActions();
         AssignInputs();
@@ -103,5 +108,21 @@ public class PlayerController : MonoBehaviour
         else
         { Invoke("TurnOffTransition", 5); } // need to find a better fix
 
+    }
+
+    public void TakeDamage()
+    {
+        currentHp -= 1;
+
+        if (currentHp <= 0)
+        {
+            currentHp = 0;
+            ReSpawn();
+        }
+    }
+
+    public void ReSpawn()
+    {
+        transform.Translate(startPosition);
     }
 }
