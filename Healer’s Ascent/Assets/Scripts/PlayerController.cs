@@ -20,7 +20,8 @@ public class PlayerController : MonoBehaviour
 
     CustomActions input;
 
-    [SerializeField] SliderController sliderController;
+    [SerializeField] ModelSliderController modelSliderController;
+
 
     [SerializeField]  NavMeshAgent agent;
     [SerializeField]  Animator animator;
@@ -48,6 +49,7 @@ public class PlayerController : MonoBehaviour
         input = new CustomActions();
         AssignInputs();
         UpdateSpeed();
+        modelSliderController.UpdateModel(Brave);
     }
 
     
@@ -152,7 +154,7 @@ public class PlayerController : MonoBehaviour
         {
             Brave = 1;
         }
-        sliderController.UpdateValue(Brave);
+        modelSliderController.UpdateModel(Brave);
         CurrentHp = maxHp;
         UpdateSpeed();
     }
